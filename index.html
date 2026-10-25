@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minds on the Gap</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&family=Space+Mono:wght@700&display=swap">
+<style>
+:root{--bg:#0b46c0;--fg:#fff;--mut:#e3eaff;--card:#d63f27;--line:rgba(255,255,255,.4);--acc:#ffd23f;--accfg:#1b1340;--acc2:#0b46c0;--ink:#0b2a7a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b46c0;--fg:#fff;--mut:#e3eaff;--card:#d63f27;--line:rgba(255,255,255,.4);--acc:#ffd23f;--accfg:#1b1340;--acc2:#0b46c0;--ink:#0b2a7a}}
+:root[data-theme="dark"]{--bg:#0b46c0;--fg:#fff;--mut:#e3eaff;--card:#d63f27;--line:rgba(255,255,255,.4);--acc:#ffd23f;--accfg:#1b1340;--acc2:#0b46c0;--ink:#0b2a7a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:18px/1.55 Outfit,"Segoe UI",Arial,sans-serif}
+main{max-width:920px;margin:0 auto;padding:20px 16px 60px}
+h1,h2{font-family:"Space Mono",ui-monospace,Menlo,Consolas,monospace}h1{font-size:clamp(2.2rem,9vw,3.8rem);line-height:1.05;margin:8px 0 10px;color:var(--fg)}h2{font-size:1.35rem;margin:0 0 10px}
+p.s{color:var(--mut);margin:0 0 14px}
+.card{background:var(--card);border-radius:0;padding:20px;margin:16px 0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:transparent;color:var(--fg);border:2px solid var(--fg);border-radius:999px;padding:7px 16px;cursor:pointer;font-weight:600}
+button.on{background:var(--fg);color:var(--acc2)}button.pri{background:var(--acc);color:var(--accfg);border-color:var(--acc)}
+button:disabled{opacity:.5;cursor:default}
+input[type=text],input[type=password],textarea,select{width:100%;background:#fff;color:var(--ink);border:2px solid #fff;border-radius:0;padding:10px}
+textarea{min-height:200px;resize:vertical}
+label{display:block;font-weight:bold;margin:12px 0 4px}
+.ph{padding:26px;text-align:center;color:var(--mut);border:1px dashed var(--line);border-radius:8px}
+.cm{border-top:1px solid var(--line);padding:10px 0;font-size:.95rem}.cm:first-child{border:0}
+.cm b{color:var(--acc)}.tag{font-size:.85rem;color:var(--mut)}
+.wheel{overflow-x:auto}.wheel svg{width:100%;height:auto;min-width:440px;max-width:680px;display:block;margin:0 auto}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.9rem;margin:8px 0}.sw{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.ax{border-top:1px solid var(--line);padding:10px 0}.ax:first-child{border:0}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media(max-width:640px){.row{grid-template-columns:1fr}}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:20px;display:none}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>Minds on the Gap</h1>
+<div class="tabs" id="tabs"></div>
+
+<section id="play">
+  <label for="grp" style="margin-top:0">Your group name</label>
+  <input type="text" id="grp" placeholder="e.g. Group 3" autocomplete="off">
+  <p class="s" style="margin-top:14px">Look at the infographic shown to the group or on your printout, then choose which one you are critiquing.</p>
+  <div class="tabs" id="igtabs"></div>
+  <div class="card">
+    <label for="txt" style="margin-top:0">Your critique</label>
+    <textarea id="txt"></textarea>
+    <p><button class="pri" id="sub">Submit critique</button> <span class="tag" id="cnt"></span></p>
+  </div>
+</section>
+
+<section id="login" class="hide">
+  <div class="card">
+    <h2>Facilitator sign-in</h2>
+    <label for="lpw" style="margin-top:0">Password</label>
+    <input type="password" id="lpw" autocomplete="current-password">
+    <p><button class="pri" id="lbtn">Sign in</button></p>
+  </div>
+</section>
+
+<section id="fac" class="hide">
+  <div class="card">
+    <h2>Names for the three infographics</h2>
+    <div class="row" id="setup"></div>
+    <p><button id="savecfg">Save names</button></p>
+  </div>
+  <div class="card">
+    <h2>Generate the wheel from the critiques</h2>
+    <p class="s">Claude reads every critique, derives the axes from the language the groups used, and scores each infographic against them, with a reason and evidence for each score. Nothing is pre-defined.</p>
+    <button class="pri" id="gen">Analyse critiques and build wheel</button>
+    <p class="tag" id="stat"></p>
+  </div>
+  <div class="card hide" id="wcard">
+    <h2>The wheel</h2>
+    <select id="view" aria-label="Wheel view"></select>
+    <div class="wheel" id="wheel"></div>
+    <div class="leg" id="leg"></div>
+    <button id="dl">Download wheel (SVG)</button>
+  </div>
+  <div class="card hide" id="acard">
+    <h2>Axes that emerged</h2>
+    <p class="s">Edit any name or pole wording to suit your group, then save. Higher always means more accessible to affected communities.</p>
+    <div id="axes"></div>
+    <button id="saveax">Save wording changes</button>
+  </div>
+  <div class="card hide" id="rcard">
+    <h2>Why each score</h2>
+    <div id="why"></div>
+  </div>
+  <div class="card">
+    <h2>All critiques</h2>
+    <div id="cms"></div>
+  </div>
+</section>
+</main>
+<div id="toast" role="status"></div>
+<script>
+const COL=["#ffd23f","#5ef2c0","#ff8fb8","#ffffff","#c3b1ff","#ff9f43","#7fd1ff","#d63f27"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let cur=0,done=0,rows=[],tab="play",an=null,ok=false,pw="",busy=false,jobErr="";
+let cfg={names:["Infographic 1","Infographic 2","Infographic 3"]};
+try{pw=sessionStorage.getItem("pw")||""}catch(e){}
+
+function toast(t){const e=$("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",3200)}
+async function api(path,opt={}){
+  const r=await fetch("/api/"+path,{...opt,headers:{"content-type":"application/json","x-admin-key":pw}});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){const e=new Error(d.error||r.statusText);e.status=r.status;throw e}
+  return d;
+}
+function drawTabs(){
+  const t=$("tabs");t.innerHTML="";
+  [["play","Participate"],["fac","Facilitator"]].forEach(([id,l])=>{const b=document.createElement("button");b.textContent=l;if(tab===id)b.className="on";b.onclick=()=>{tab=id;drawTabs()};t.appendChild(b)});
+  $("play").classList.toggle("hide",tab!=="play");
+  $("login").classList.toggle("hide",!(tab==="fac"&&!ok));
+  $("fac").classList.toggle("hide",!(tab==="fac"&&ok));
+  if(tab==="fac"&&ok){drawSetup();drawAll()}
+}
+function drawIgTabs(){
+  const t=$("igtabs");t.innerHTML="";
+  cfg.names.forEach((n,i)=>{const b=document.createElement("button");b.textContent=n;if(i===cur)b.className="on";b.onclick=()=>{cur=i;drawIgTabs()};t.appendChild(b)});
+}
+$("sub").onclick=async()=>{
+  const g=$("grp").value.trim(),text=$("txt").value.trim();
+  if(!g){toast("Please enter your group name first");return}
+  if(!text){toast("Please write your critique first");return}
+  const b=$("sub");b.disabled=true;
+  try{
+    await api("critique",{method:"POST",body:JSON.stringify({g,ig:cur,text})});
+    done++;$("cnt").textContent=done+" submitted by you this session";$("txt").value="";
+    toast("Saved. You can critique another infographic.");
+  }catch(e){toast("Could not save: "+e.message)}
+  b.disabled=false;
+};
+try{const g=localStorage.getItem("grp");if(g)$("grp").value=g}catch(e){}
+$("grp").oninput=()=>{try{localStorage.setItem("grp",$("grp").value)}catch(e){}};
+
+/* facilitator */
+async function refresh(){
+  const[c,a]=await Promise.all([api("admin/critiques"),api("admin/analysis")]);
+  rows=c.critiques;an=a.analysis;busy=a.job?.state==="running";jobErr=a.job?.state==="error"?a.job.error:"";
+}
+$("lbtn").onclick=async()=>{
+  pw=$("lpw").value;
+  try{await refresh();ok=true;try{sessionStorage.setItem("pw",pw)}catch(e){}drawTabs()}
+  catch(e){toast(e.status===401?"Wrong password":"Could not sign in: "+e.message)}
+};
+$("lpw").addEventListener("keydown",e=>{if(e.key==="Enter")$("lbtn").click()});
+function drawSetup(){
+  if(document.activeElement?.closest("#setup"))return;
+  $("setup").innerHTML=cfg.names.map((n,i)=>`<div><label for="n${i}" style="margin-top:0">Infographic ${i+1}</label><input type="text" id="n${i}" value="${esc(n)}"></div>`).join("");
+}
+$("savecfg").onclick=async()=>{
+  const names=[0,1,2].map(i=>$("n"+i).value.trim()||"Infographic "+(i+1));
+  try{await api("admin/config",{method:"PUT",body:JSON.stringify({names})});cfg={names};drawIgTabs();toast("Names saved")}catch(e){toast("Could not save: "+e.message)}
+};
+function drawAll(){
+  $("gen").disabled=busy;
+  $("stat").textContent=busy?"Reading the critiques and deriving axes… this can take a few minutes. You can leave this page open.":
+    (jobErr?"Last analysis failed: "+jobErr+" ":"")+rows.length+" critiques from "+new Set(rows.map(r=>r.g)).size+" groups so far."+(an&&an.n!==rows.length?" The current wheel was built from "+an.n+", so you may want to regenerate.":"");
+  const has=an&&an.axes&&an.axes.length;
+  ["wcard","acard","rcard"].forEach(i=>$(i).classList.toggle("hide",!has));
+  drawCms();if(!has)return;
+  const sel=$("view"),v=sel.value||"cmp";
+  sel.innerHTML=`<option value="cmp">Compare all three infographics</option>`+cfg.names.map((n,i)=>`<option value="${i}">${esc(n)}</option>`).join("");
+  sel.value=v;if(sel.value!==v)sel.value="cmp";
+  drawWheel();
+  if(!document.activeElement?.closest("#axes"))$("axes").innerHTML=an.axes.map((a,i)=>`<div class="ax"><div class="row"><div><label for="an${i}" style="margin-top:0">Axis name</label><input type="text" id="an${i}" value="${esc(a.name)}"></div><div><label for="al${i}" style="margin-top:0">1 · Barrier pole</label><input type="text" id="al${i}" value="${esc(a.low)}"></div><div><label for="ah${i}" style="margin-top:0">5 · Accessible pole</label><input type="text" id="ah${i}" value="${esc(a.high)}"></div></div><p class="tag" style="margin:8px 0 0">${esc(a.definition)}</p>${(a.evidence||[]).map(e=>`<div class="tag">“${esc(e)}”</div>`).join("")}</div>`).join("");
+  $("why").innerHTML=cfg.names.map((n,i)=>`<h3 style="font-size:1rem;margin:12px 0 4px">${esc(n)}</h3>`+an.axes.map(a=>{const s=an.scores?.[i]?.[a.key]||{};return`<div class="cm"><b>${esc(a.name)}: ${s.score??"not enough evidence"}</b>${s.why?`<div>${esc(s.why)}</div>`:""}</div>`}).join("")).join("");
+}
+function drawWheel(){
+  const v=$("view").value||"cmp",N=an.axes.length,cx=290,cy=265,R=165;
+  const pt=(i,k)=>{const a=(i*360/N-90)*Math.PI/180,r=R*k/5;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]};
+  const S=(v==="cmp"?[0,1,2]:[+v]).map((ig,j)=>({l:cfg.names[ig]+" (n="+rows.filter(r=>r.ig===ig).length+")",v:an.axes.map(a=>an.scores?.[ig]?.[a.key]?.score||0),c:COL[(v==="cmp"?j:ig)%COL.length]}));
+  let g=`<rect width="580" height="520" fill="var(--bg)"/>`;
+  for(let k=1;k<=5;k++)g+=`<polygon points="${an.axes.map((_,i)=>pt(i,k).join(",")).join(" ")}" fill="none" stroke="var(--line)"/><text x="${cx+4}" y="${cy-R*k/5-2}" font-size="10" fill="var(--mut)">${k}</text>`;
+  an.axes.forEach((a,i)=>{const[x,y]=pt(i,5),[lx,ly]=pt(i,6.15),anc=lx<cx-8?"end":lx>cx+8?"start":"middle";
+    g+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)"/><text x="${lx}" y="${ly}" font-size="12.5" font-weight="bold" fill="var(--fg)" text-anchor="${anc}">${esc(a.name)}</text><text x="${lx}" y="${ly+14}" font-size="10" fill="var(--mut)" text-anchor="${anc}">${esc(a.low)} → ${esc(a.high)}</text>`});
+  S.forEach(s=>{g+=`<polygon points="${s.v.map((k,i)=>pt(i,k).join(",")).join(" ")}" fill="${s.c}" fill-opacity=".14" stroke="${s.c}" stroke-width="2"/>`+s.v.map((k,i)=>k?`<circle cx="${pt(i,k)[0]}" cy="${pt(i,k)[1]}" r="3.5" fill="${s.c}"/>`:"").join("")});
+  g+=`<text x="290" y="510" font-size="11" fill="var(--mut)" text-anchor="middle">Centre = barrier for affected communities · Outer ring = accessible</text>`;
+  $("wheel").innerHTML=`<svg id="svg" viewBox="0 0 580 520" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,Arial,sans-serif" role="img" aria-label="Accessibility wheel">${g}</svg>`;
+  $("leg").innerHTML=S.map(s=>`<span><i class="sw" style="background:${s.c}"></i>${esc(s.l)}</span>`).join("");
+}
+function drawCms(){
+  $("cms").innerHTML=rows.length?[...rows].sort((a,b)=>a.ig-b.ig||a.ts-b.ts).map(r=>`<div class="cm"><b>${esc(r.g)}</b> <span class="tag">on ${esc(cfg.names[r.ig])}</span><div style="white-space:pre-wrap">${esc(r.text)}</div></div>`).join(""):`<p class="tag">No critiques yet.</p>`;
+}
+$("view").onchange=drawWheel;
+$("saveax").onclick=async()=>{
+  const axes=an.axes.map((a,i)=>({...a,name:$("an"+i).value.trim()||a.name,low:$("al"+i).value.trim()||a.low,high:$("ah"+i).value.trim()||a.high}));
+  try{await api("admin/analysis",{method:"PUT",body:JSON.stringify({analysis:{...an,axes}})});an={...an,axes};drawAll();toast("Saved")}catch(e){toast("Could not save: "+e.message)}
+};
+$("dl").onclick=()=>{
+  const s=$("svg");if(!s)return;
+  const cs=getComputedStyle(document.documentElement);
+  const txt=s.outerHTML.replace(/var\(--(\w+)\)/g,(m,n)=>cs.getPropertyValue("--"+n).trim());
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"image/svg+xml"}));a.download="minds-on-the-gap-wheel.svg";a.click();
+};
+$("gen").onclick=async()=>{
+  if(rows.length<3){toast("Collect a few more critiques first");return}
+  try{await api("admin/analyse",{method:"POST",body:"{}"});busy=true;jobErr="";drawAll()}
+  catch(e){toast("Could not start: "+e.message)}
+};
+
+/* boot */
+drawIgTabs();drawTabs();
+api("config").then(c=>{if(c.names)cfg={names:[0,1,2].map(i=>c.names[i]||"Infographic "+(i+1))};drawIgTabs()}).catch(()=>{});
+if(pw)refresh().then(()=>{ok=true;drawTabs()}).catch(()=>{});
+setInterval(async()=>{if(tab==="fac"&&ok){try{await refresh();drawAll()}catch(e){}}},6000);
+</script>
+</body>
+</html>
