@@ -76,14 +76,12 @@ label{display:block;font-weight:bold;margin:12px 0 4px}
   </div>
   <div class="card hide" id="wcard">
     <h2>The wheel</h2>
-    <select id="view" aria-label="Wheel view"></select>
     <div class="wheel" id="wheel"></div>
-    <div class="leg" id="leg"></div>
     <button id="dl">Download wheel (SVG)</button>
   </div>
   <div class="card hide" id="acard">
     <h2>Trade-offs that emerged</h2>
-    <p class="s">Each axis is a tension between two things that both matter. Neither pole is the “right” side. Edit any wording to suit your group, then save.</p>
+    <p class="s">Each axis is a tension between two concerns that both matter. Neither side is the “right” one. Edit any wording to suit your group, then save.</p>
     <div id="axes"></div>
     <button id="saveax">Save wording changes</button>
   </div>
@@ -159,48 +157,38 @@ $("savecfg").onclick=async()=>{
   const names=[0,1,2].map(i=>$("n"+i).value.trim()||"Infographic "+(i+1));
   try{await api("admin/config",{method:"PUT",body:JSON.stringify({names})});cfg={names};drawIgTabs();toast("Names saved")}catch(e){toast("Could not save: "+e.message)}
 };
+const nm=x=>x.a.label+" vs "+x.b.label;
 function leanTxt(x,l){return l==="a"?"leans toward “"+x.a.label+"”":l==="b"?"leans toward “"+x.b.label+"”":l==="both"?"pulled both ways":"not enough evidence"}
 function drawAll(){
   $("gen").disabled=busy;
-  const has=an&&an.v===2&&an.axes?.length;
+  const has=an&&an.v===3&&an.axes?.length;
   $("stat").textContent=busy?"Reading the critiques and finding the trade-offs… this can take a few minutes. You can leave this page open.":
     (jobErr?"Last analysis failed: "+jobErr+" ":"")+rows.length+" critiques from "+new Set(rows.map(r=>r.g)).size+" groups so far."+(an&&!has?" The saved wheel uses an older format, so please regenerate.":(has&&an.n!==rows.length?" The current wheel was built from "+an.n+", so you may want to regenerate.":""));
   ["wcard","acard","rcard"].forEach(i=>$(i).classList.toggle("hide",!has));
   drawCms();if(!has)return;
-  const sel=$("view"),v=sel.value||"cmp";
-  sel.innerHTML=`<option value="cmp">Compare all three infographics</option>`+cfg.names.map((n,i)=>`<option value="${i}">${esc(n)}</option>`).join("");
-  sel.value=v;if(sel.value!==v)sel.value="cmp";
   drawWheel();
-  if(!document.activeElement?.closest("#axes"))$("axes").innerHTML=an.axes.map((x,i)=>`<div class="ax"><div class="row"><div><label for="an${i}" style="margin-top:0">Tension</label><input type="text" id="an${i}" value="${esc(x.name)}"></div><div><label for="aa${i}" style="margin-top:0">One pole</label><input type="text" id="aa${i}" value="${esc(x.a.label)}"></div><div><label for="ab${i}" style="margin-top:0">The other pole</label><input type="text" id="ab${i}" value="${esc(x.b.label)}"></div></div><p style="margin:10px 0 4px">${esc(x.tradeoff)}</p><div class="tag"><b>${esc(x.a.label)}</b> favours: ${esc(x.a.favours)}</div><div class="tag"><b>${esc(x.b.label)}</b> favours: ${esc(x.b.favours)}</div>${(x.evidence||[]).map(e=>`<div class="tag">“${esc(e)}”</div>`).join("")}</div>`).join("");
-  $("why").innerHTML=cfg.names.map((n,i)=>`<h3 style="font-size:1rem;margin:12px 0 4px">${esc(n)}</h3>`+an.axes.map(x=>{const p=an.pos?.[i]?.[x.key]||{};return`<div class="cm"><b>${esc(x.name)}: ${leanTxt(x,p.lean)}</b>${p.why?`<div>${esc(p.why)}</div>`:""}</div>`}).join("")).join("");
+  if(!document.activeElement?.closest("#axes"))$("axes").innerHTML=an.axes.map((x,i)=>`<div class="ax"><div class="row" style="grid-template-columns:1fr 1fr"><div><label for="aa${i}" style="margin-top:0">One side of the tension</label><input type="text" id="aa${i}" value="${esc(x.a.label)}"></div><div><label for="ab${i}" style="margin-top:0">The other side</label><input type="text" id="ab${i}" value="${esc(x.b.label)}"></div></div><p style="margin:10px 0 4px">${esc(x.tradeoff)}</p><div class="tag"><b>${esc(x.a.label)}</b>: ${esc(x.a.favours)}</div><div class="tag"><b>${esc(x.b.label)}</b>: ${esc(x.b.favours)}</div>${(x.evidence||[]).map(e=>`<div class="tag">“${esc(e)}”</div>`).join("")}</div>`).join("");
+  $("why").innerHTML=cfg.names.map((n,i)=>`<h3 style="font-size:1rem;margin:12px 0 4px">${esc(n)}</h3>`+an.axes.map(x=>{const p=an.pos?.[i]?.[x.key]||{};return`<div class="cm"><b>${esc(nm(x))}: ${leanTxt(x,p.lean)}</b>${p.why?`<div>${esc(p.why)}</div>`:""}</div>`}).join("")).join("");
 }
 function wrap(s,n){const L=[];let c="";String(s).split(/\s+/).forEach(t=>{if(c&&(c+" "+t).length>n){L.push(c);c=t}else c=(c+" "+t).trim()});if(c)L.push(c);return L}
 function drawWheel(){
-  const v=$("view").value||"cmp",N=an.axes.length,W=780,H=700,cx=390,cy=345,R=205,igs=v==="cmp"?[0,1,2]:[+v];
+  const N=an.axes.length,W=780,H=660,cx=390,cy=330,R=215;
   const dir=i=>{const a=(-90+i*180/N+(i%2?180:0))*Math.PI/180;return[Math.cos(a),Math.sin(a)]};
-  let g=`<rect width="${W}" height="${H}" fill="var(--bg)"/><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--line)" stroke-width="2"/>`;
+  let g=`<rect width="${W}" height="${H}" fill="var(--bg)"/><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--fg)" stroke-width="2.5"/>`;
   an.axes.forEach((x,i)=>{const[ux,uy]=dir(i);
-    g+=`<line x1="${cx-ux*R}" y1="${cy-uy*R}" x2="${cx+ux*R}" y2="${cy+uy*R}" stroke="var(--line)" stroke-width="1.5"/>`;
+    g+=`<line x1="${cx-ux*R}" y1="${cy-uy*R}" x2="${cx+ux*R}" y2="${cy+uy*R}" stroke="var(--fg)" stroke-width="2"/>`;
     [[x.a.label,1],[x.b.label,-1]].forEach(([lab,s])=>{
-      const px=cx+s*ux*(R+14),py=cy+s*uy*(R+14),sx=s*ux,sy=s*uy,anc=sx>0.2?"start":sx<-0.2?"end":"middle",L=wrap(lab,20);
-      const y0=sy<-0.5?py-(L.length-1)*14-4:sy>0.5?py+14:py-(L.length-1)*7+4;
-      g+=`<text x="${px}" y="${y0}" font-size="13.5" font-weight="bold" fill="var(--fg)" text-anchor="${anc}">${L.map((l,k)=>`<tspan x="${px}" dy="${k?14:0}">${esc(l)}</tspan>`).join("")}</text>`})});
-  igs.forEach((ig,j)=>{const c=COL[ig%COL.length],off=(j-(igs.length-1)/2)*(igs.length>1?16:0);
-    an.axes.forEach((x,i)=>{const p=an.pos?.[ig]?.[x.key];if(!p||p.lean==="none")return;
-      const[ux,uy]=dir(i),ox=-uy*off,oy=ux*off,at=t=>[cx+ux*R*t+ox,cy+uy*R*t+oy];
-      if(p.lean==="both"){const[x1,y1]=at(-.3),[x2,y2]=at(.3);
-        g+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="3"/><circle cx="${x1}" cy="${y1}" r="6.5" fill="var(--bg)" stroke="${c}" stroke-width="3"/><circle cx="${x2}" cy="${y2}" r="6.5" fill="var(--bg)" stroke="${c}" stroke-width="3"/>`}
-      else{const[px,py]=at(p.lean==="a"?.62:-.62);g+=`<circle cx="${px}" cy="${py}" r="8" fill="${c}" stroke="var(--bg)" stroke-width="2"/>`}})});
-  g+=`<text x="${cx}" y="${H-16}" font-size="11.5" fill="var(--mut)" text-anchor="middle">Filled dot: leans that way · Bar with open ends: pulled both ways · Positions are interpretive, not measured</text>`;
+      const px=cx+s*ux*(R+16),py=cy+s*uy*(R+16),sx=s*ux,sy=s*uy,anc=sx>0.2?"start":sx<-0.2?"end":"middle",L=wrap(lab,18);
+      const y0=sy<-0.5?py-(L.length-1)*18-4:sy>0.5?py+16:py-(L.length-1)*9+5;
+      g+=`<text x="${px}" y="${y0}" font-size="17" font-weight="bold" fill="var(--fg)" text-anchor="${anc}">${L.map((l,k)=>`<tspan x="${px}" dy="${k?18:0}">${esc(l)}</tspan>`).join("")}</text>`})});
+  g+=`<circle cx="${cx}" cy="${cy}" r="5" fill="var(--fg)"/>`;
   $("wheel").innerHTML=`<svg id="svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Outfit,Arial,sans-serif" role="img" aria-label="Wheel of trade-offs">${g}</svg>`;
-  $("leg").innerHTML=igs.map(ig=>`<span><i class="sw" style="background:${COL[ig%COL.length]}"></i>${esc(cfg.names[ig])} (n=${rows.filter(r=>r.ig===ig).length})</span>`).join("");
 }
 function drawCms(){
   $("cms").innerHTML=rows.length?[...rows].sort((a,b)=>a.ig-b.ig||a.ts-b.ts).map(r=>`<div class="cm"><b>${esc(r.g)}</b> <span class="tag">on ${esc(cfg.names[r.ig])}</span><div style="white-space:pre-wrap">${esc(r.text)}</div></div>`).join(""):`<p class="tag">No critiques yet.</p>`;
 }
-$("view").onchange=drawWheel;
 $("saveax").onclick=async()=>{
-  const axes=an.axes.map((x,i)=>({...x,name:$("an"+i).value.trim()||x.name,a:{...x.a,label:$("aa"+i).value.trim()||x.a.label},b:{...x.b,label:$("ab"+i).value.trim()||x.b.label}}));
+  const axes=an.axes.map((x,i)=>{const a={...x.a,label:$("aa"+i).value.trim()||x.a.label},b={...x.b,label:$("ab"+i).value.trim()||x.b.label};return{...x,a,b,name:a.label+" vs "+b.label}});
   try{await api("admin/analysis",{method:"PUT",body:JSON.stringify({analysis:{...an,axes}})});an={...an,axes};drawAll();toast("Saved")}catch(e){toast("Could not save: "+e.message)}
 };
 $("dl").onclick=()=>{
